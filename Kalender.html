@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kalender</title>
+    <style>
+      #kalender {
+        width: 500px;
+        border: 1px solid #ccc;
+        margin: 40px auto;
+      }
+
+      .entwicklung {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .entwicklung button {
+        border: none;
+        background-color: #eee;
+        padding: 15px;
+        cursor: pointer;
+      }
+
+      #monat-jahr {
+        font-weight: bold;
+      }
+
+      .wochentage {
+        display: flex;
+        justify-content: space-between;
+        padding: 7px;
+        background-color: #f5f5f5;
+      }
+
+      .wochentage span {
+        width: 80px;
+        text-align: center;
+      }
+
+      .wochen {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .woche {
+        display: flex;
+        width: 100%;
+      }
+
+      .tag {
+        width: 70px;
+        height: 70px;
+        border: 1px solid #ddd;
+        text-align: center;
+        padding: 7px;
+      }
+
+      .tag.heute {
+        background-color: #fffacd;
+      }
+
+      .tag.andere-monate {
+        color: #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="kalender">
+      <div class="entwicklung">
+        <button id="vorherige">&lt;</button>
+        <span id="monat-jahr"></span>
+        <button id="naechste">&gt;</button>
+        <button id="heute">Heute</button>
+        <input type="text" id="monat-eingabe" placeholder="Monat (1-12)" />
+        <input type="text" id="jahr-eingabe" placeholder="Jahr" />
+      </div>
+      <div class="wochentage">
+        <span>Montag</span>
+        <span>Dienstag</span>
+        <span>Mittwoch</span>
+        <span>Donnerstag</span>
+        <span>Freitag</span>
+        <span>Samstag</span>
+        <span>Sonntag</span>
+      </div>
+      <div class="wochen"></div>
+    </div>
+
+    <script>
+      const kalender = document.getElementById("kalender");
+      const monatJahr = document.getElementById("monat-jahr");
+      const vorherige = document.getElementById("vorherige");
+      const naechste = document.getElementById("naechste");
+      const heute = document.getElementById("heute");
+      const monatEingabe = document.getElementById("monat-eingabe");
+      const jahrEingabe = document.getElementById("jahr-eingabe");
+      const wochen = document.querySelector(".wochen");
+
+      let datum = new Date();
+      let monat = datum.getMonth();
+      let jahr = datum.getFullYear();
+
+      anzeigenMonat(monat, jahr);
+
+      vorherige.addEventListener("click", function () {
+        monat--;
+        if (monat < 0) {
+          monat = 11;
+          jahr--;
+        }
+        anzeigenMonat(monat, jahr);
+      });
+
+      naechste.addEventListener("click", function () {
+        monat++;
+        if (monat > 11) {
+          monat = 0;
+          jahr++;
+        }
+        anzeigenMonat(monat, jahr);
+      });
+
+      heute.addEventListener("click", function () {
+        let datum = new Date();
+        monat = datum.getMonth();
+        jahr = datum.getFullYear();
+        anzeigenMonat(monat, jahr);
+      });
+
+      monatEingabe.addEventListener("change", function () {
+        let neuerMonat = parseInt(monatEingabe.value) - 1;
+        if (neuerMonat < 0 || neuerMonat > 11) {
+          alert("Ungültiger Monat. Bitte geben Sie eine Zahl zwischen 1 und 12 ein.");
+          return;
+        }
+        anzeigenMonat(neuerMonat, jahr);
+      });
+      function anzeigenMonat(monat, jahr) {
+        monatJahr.textContent = `${getMonatsName(monat)} ${jahr}`;
+        wochen.innerHTML = "";
+
+        let ersterTag = new Date(jahr, monat, 1);
+        let tagWoche = ersterTag.getDay();
+
+        // Hinzufügen der leeren Tage vor dem ersten Tag des Monats
+        for (let i = 0; i < tagWoche; i++) {
+          let tag = document.createElement("div");
+          tag.classList.add("tag", "andere-monate");
+          wochen.appendChild(tag);
+        }
+
+        // Hinzufügen der Tage des Monats
+        let anzahlTage = getAnzahlTage(monat, jahr);
+        for (let i = 1; i <= anzahlTage; i++) {
+          let tag = document.createElement("div");
+          tag.classList.add("tag");
+          tag.textContent = i;
+
+          if (
+            i === datum.getDate() &&
+            monat === datum.getMonth() &&
+            jahr === datum.getFullYear()
+          ) {
+            tag.classList.add("heute");
+          }
+
+          wochen.appendChild(tag);
+        }
+
+        // Hinzufügen der leeren Tage nach dem letzten Tag des Monats
+        let anzahlTageWoche = wochen.getElementsByClassName("tag").length;
+        let anzahlTageRest = 7 - (anzahlTageWoche % 7);
+        for (let i = 0; i < anzahlTageRest; i++) {
+          let tag = document.createElement("div");
+          tag.classList.add("tag", "andere-monate");
+          wochen.appendChild(tag);
+        }
+      }
+
+      function getMonatsName(monat) {
+        let monatsNamen = [
+          "Januar",
+          "Februar",
+          "März",
+          "April",
+          "Mai",
+          "Juni",
+          "Juli",
+          "August",
+          "September",
+          "Oktober",
+          "November",
+          "Dezember",
+        ];
+        return monatsNamen[monat];
+      }
+
+      function getAnzahlTage(monat, jahr) {
+        if (monat === 1) {
+          return istSchaltjahr(jahr) ? 29 : 28;
+        } else {
+          return [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][monat];
+        }
+      }
+
+      function istSchaltjahr(jahr) {
+        return jahr % 4 === 0 && (jahr % 100 !== 0 || jahr % 400 === 0);
+      }
+
+      jahrEingabe.addEventListener("change", function () {
+        let jahr = parseInt(jahrEingabe.value);
+        if (isNaN(jahr)) {
+          alert("Ungültiges Jahr. Bitte geben Sie eine Zahl ein.");
+          return;
+        }
+        anzeigenMonat(monat, jahr);
+      });
+    </script>
+  </body>
+</html>
